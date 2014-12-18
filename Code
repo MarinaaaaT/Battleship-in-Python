@@ -1,0 +1,291 @@
+#Battleships Project
+import random
+import copy
+
+def introduction():
+    print("Hello. Welcome to single player Battleship game. You will have 50 guesses to sink all the ships.")
+    yn = int (input("Would you like to see the rules? Please hit 1 for yes or 2 for no.\n"))
+    return yn
+
+def rules(x):
+    while x != 1 and x!= 2:
+        x = int(input("Incorrect input. \nWould you like to see the rules? \nPlease press 1 for yes and 2 for no.\n"))
+
+    if x == 1:
+        print ("The computer secretly places five ships on a 10 by 10 grid \n \nThe rows are labeled by the numbers 1-10 and columns labeled by the letters a-j.")
+        print ("You can then guess the location of the ships, for example by typing 5B. \n")
+        print ("If there is no ship at that location, the computer will report a miss. If there is, it will report a hit\n")
+        print ("If you manage to hit all parts of the given ship (they extend over several grid squares), then the computer reports the ship as sunk.\n")
+        print ("You win by sinking all five ships, with lengths varying from 2-6 grid squares.\n")
+        print ("Alright, let's get started.\n")
+
+    if x == 2:
+        print ("Alright, let's get started!\n")
+
+def internal_grid_makerO():
+    grid = [['A','B','C','D','E','F','G','H','I','J']]
+    for i in range (1,11):
+        toappend = ['-', '-', '-', '-', '-', '-', '-', '-', '-', '-']
+        toappend.extend(str(i))
+        if i > 9:
+            toappend = ['-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '10']
+        grid.append(toappend)
+    return grid
+
+def validate_h(j, i, shiplen, grid):
+    for x in range(shiplen):
+        if grid [j][i+x] != '-':
+            return False
+
+def validate_v(i, j, shiplen, grid):
+    for x in range(shiplen):
+        if grid [i+x][j] != '-':
+            return False
+        
+def ship_placement1(grid, shiplen, shipname):
+    hv = random.randrange (0, 2)
+    # 0 = horizontal, 1= vertical
+    if hv == 0:
+        j1 = random.randrange(1,11)
+        k1 = random.randrange(0,(12-shiplen))
+        tf = validate_h(j1, k1, shiplen, grid)
+        while tf is False:
+            j1 = random.randrange(1,11)
+            k1 = random.randrange(0,(12-shiplen))
+            tf = validate_h(j1, k1, shiplen, grid)
+        for i in range(shiplen):                
+            grid [j1][(k1+i)] = shipname
+    if hv == 1:
+        j1 = random.randrange(0,10)
+        k1 = random.randrange(1,(12-shiplen))
+        tf = validate_v(k1, j1, shiplen, grid)
+        while tf is False:
+            j1 = random.randrange(0,10)
+            k1 = random.randrange(1,(12-shiplen))
+            tf = validate_v(k1, j1, shiplen, grid)
+        for i in range(shiplen):
+            grid [(k1+i)][j1] = shipname
+        return grid 
+    
+
+def ship_placement2(gridtoplace):
+    carrier = 'c'
+    battleship = 'b'
+    submarine = 's'
+    destroyer = 'd'
+    patrolboat = 'p'
+
+    clen = 6
+    blen = 5
+    slen = 4
+    dlen = 3
+    plen = 2
+
+    ship_placement1(gridtoplace, clen, carrier)
+    ship_placement1(gridtoplace, blen, battleship)
+    ship_placement1(gridtoplace, slen, submarine)
+    ship_placement1(gridtoplace, dlen, destroyer)
+    ship_placement1(gridtoplace, plen, patrolboat)
+
+    return gridtoplace
+
+def cheat(grid):
+    carrier = 'c'
+    for i in range(6):
+        grid [1][i] = carrier
+    battleship = 'b'
+    for i in range(5):
+        grid [2][i] = battleship
+    submarine = 's'
+    for i in range(4):
+        grid [3][i] = submarine
+    destroyer = 'd'
+    for i in range (3):
+        grid [4][i] = destroyer
+    patrolboat = 'p'
+    for i in range (2):
+        grid [5][i] = patrolboat
+    return grid
+
+#It may be easier to use the cheat2 function to simply reveal where the random
+#placement is to check ship placement function
+
+def cheat2(grid):
+    for i in range(11):
+        print(grid [i])
+
+def user_shootc():
+    col = input ('Which column would you like to shoot in? (A-J)')
+
+    if col == 'a' or col == 'A':
+        col = 0
+
+    elif col == 'b' or col == 'B':
+        col = 1
+
+    elif col == 'c' or col == 'C':
+        col = 2
+
+    elif col == 'd' or col == 'D':
+        col = 3
+
+    elif col == 'e' or col == 'E':
+        col = 4
+
+    elif col == 'f' or col == 'F':
+        col = 5
+
+    elif col == 'g' or col == 'G':
+        col = 6
+
+    elif col == 'h' or col == 'H':
+        col = 7
+
+    elif col == 'i' or col == 'I':
+        col = 8
+
+    elif col == 'j' or col == 'J':
+        col = 9
+
+    else:
+        print('Error. Must be a letter A-J')
+        col = user_shootc()
+        
+    return col
+
+def user_shootr():
+    row = int (input ('Which row would you like to shoot in? (1-10)'))
+
+    if 0 < row < 11:
+        return row
+    else:
+        print ('Error. Must be a number 1-10')
+        row = user_shootr()
+        return row        
+
+def hit_or_miss(row, col, gridtocheck, egridtochange, igridtochange):
+    if egridtochange[row][col] == 'H' or egridtochange[row][col] == 'M' or egridtochange[row][col] == 'S':
+        print ("You have already shot here. Please pick a new location.")
+        return False
+
+    if gridtocheck[row][col] != '-':
+        egridtochange[row][col] = 'H'
+        igridtochange[row][col] = '-'
+        print ("You hit a ship!")
+
+    if gridtocheck[row][col] == '-':
+        egridtochange[row][col] = 'M'
+        print ("You missed")
+
+def sunk(originalgrid, externalgrid, internalgrid):
+    ccount = 0
+    bcount = 0
+    scount = 0
+    dcount = 0
+    pcount = 0
+    for i in range (1,11):
+        for j in range (10):
+            if internalgrid[i][j] == 'c':
+                ccount = ccount + 1
+    if ccount == 0:
+        print ('You have sunk the carrier.')
+        for i in range (1,11):
+            for j in range (10):
+                if originalgrid[i][j] == 'c' and externalgrid [i][j] == 'H':
+                    externalgrid [i][j] = 'S'
+
+    for i in range (1,11):
+        for j in range (10):
+            if internalgrid[i][j] == 'b':
+                bcount = bcount + 1
+    if bcount == 0:
+        print ('You have sunk the battleship.')
+        for i in range (1,11):
+            for j in range (10):
+                if originalgrid[i][j] == 'b' and externalgrid [i][j] == 'H':
+                    externalgrid [i][j] = 'S'
+
+    for i in range (1,11):
+        for j in range (10):
+            if internalgrid[i][j] == 's':
+                scount = scount + 1
+    if scount == 0:
+        print ('You have sunk the submarine.')
+        for i in range (1,11):
+            for j in range (10):
+                if originalgrid[i][j] == 's' and externalgrid [i][j] == 'H':
+                    externalgrid [i][j] = 'S'
+
+    for i in range (1,11):
+        for j in range (10):
+            if internalgrid[i][j] == 'd':
+                dcount = dcount + 1
+    if dcount == 0:
+        print ('You have sunk the destroyer.')
+        for i in range (1,11):
+            for j in range (10):
+                if originalgrid[i][j] == 'd' and externalgrid [i][j] == 'H':
+                    externalgrid [i][j] = 'S'
+
+    for i in range (1,11):
+        for j in range (10):
+            if internalgrid[i][j] == 'p':
+                pcount = pcount + 1
+    if pcount == 0:
+        print ('You have sunk the patrol boat')
+        for i in range (1,11):
+            for j in range (10):
+                if originalgrid[i][j] == 'p' and externalgrid [i][j] == 'H':
+                    externalgrid [i][j] = 'S'
+    
+def external_grid_tracker(originalgrid, currentegrid, internalgrid):
+    moves = 0
+    while moves < 50:
+        check_for_win(currentegrid)
+        col = user_shootc()
+        row = user_shootr()
+        hit_or_miss(row, col, originalgrid, currentegrid, internalgrid)
+        sunk(originalgrid, currentegrid, internalgrid)
+        moves = moves + 1
+        print('You have ' + str(50-moves) + ' moves left.')
+        for i in range(11):
+            print(currentegrid [i])                
+    if moves == 50:
+        print ("Sorry, out of moves! You lose.")
+        play_again()
+            
+def check_for_win(currentegrid):
+    currentScount = 0
+    for i in range (1,11):
+        for j in range (10):
+            if currentegrid[i][j] == 'S':
+                currentScount = currentScount + 1
+    if currentScount == 20:
+        print ('Congratulations! You win!')
+        play_again()
+
+def play_again():
+    play = int (input ('Would you like to play again? Hit 1 for yes and 2 for no.'))
+    if play == 1:
+        main()
+    elif play == 2:
+        print ("Alright. Just hit ok when the next window pops up. I'll see you next time. I hope you enjoyed Battleship.")
+        quit()
+    else:
+        print ('Invalid input.')
+        play_again()
+        
+def main(): 
+    yn = introduction()
+    rules(yn)
+    emptygrid = internal_grid_makerO()
+    emptygrid2 = internal_grid_makerO()
+    originalgrid = ship_placement2(emptygrid2)
+    internalgrid = copy.deepcopy(originalgrid)
+    externalgrid = emptygrid
+    external_grid_tracker(originalgrid, externalgrid, internalgrid)
+    
+
+if __name__ == '__main__':
+    main()
+
